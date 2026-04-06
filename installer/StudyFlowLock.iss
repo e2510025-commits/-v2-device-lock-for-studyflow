@@ -14,7 +14,7 @@ AppPublisher={#MyAppPublisher}
 DefaultDirName={autopf}\StudyFlow Device Lock
 DefaultGroupName=StudyFlow Device Lock
 DisableProgramGroupPage=yes
-OutputDir=dist
+OutputDir=..\dist
 OutputBaseFilename=StudyFlow-Lock-Setup
 Compression=lzma
 SolidCompression=yes
@@ -27,9 +27,9 @@ Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
 Name: "startup"; Description: "Windows起動時に自動起動する"; GroupDescription: "追加オプション:"; Flags: unchecked
 
 [Files]
-Source: "dist\studyflow-lock.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: ".env.example"; DestDir: "{app}"; DestName: ".env"; Flags: onlyifdoesntexist
-Source: "whitelist.json"; DestDir: "{app}"; Flags: onlyifdoesntexist
+Source: "..\dist\studyflow-lock.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\.env.example"; DestDir: "{app}"; DestName: ".env"; Flags: onlyifdoesntexist
+Source: "..\whitelist.json"; DestDir: "{app}"; Flags: onlyifdoesntexist
 
 [Icons]
 Name: "{autoprograms}\StudyFlow Device Lock"; Filename: "{app}\{#MyAppExeName}"
