@@ -20,7 +20,7 @@ class AppWindow(ctk.CTk):
         on_apply_preset: Callable[[str], int],
     ) -> None:
         super().__init__()
-        self.state = state
+        self.app_state = state
         self.on_google_login = on_google_login
         self.on_fetch_running_apps = on_fetch_running_apps
         self.on_allow_app = on_allow_app
@@ -327,7 +327,7 @@ class AppWindow(ctk.CTk):
         self._login_in_progress = False
         self.google_login_button.configure(state="normal", text="Googleでログイン")
         self.login_label.configure(text="ログイン状態: 失敗")
-        self.state.set_warning(f"ログイン失敗: {reason}")
+        self.app_state.set_warning(f"ログイン失敗: {reason}")
 
     def _emoji_for_app(self, exe: str) -> str:
         value = exe.lower()
@@ -401,18 +401,18 @@ class AppWindow(ctk.CTk):
 
     def _allow_app(self, executable: str) -> None:
         self.on_allow_app(executable)
-        self.state.set_warning(f"許可に追加: {executable}")
+        self.app_state.set_warning(f"許可に追加: {executable}")
 
     def _block_app(self, executable: str) -> None:
         self.on_block_app(executable)
-        self.state.set_warning(f"ブロックに追加: {executable}")
+        self.app_state.set_warning(f"ブロックに追加: {executable}")
 
     def _apply_preset(self, category: str) -> None:
         count = self.on_apply_preset(category)
-        self.state.set_warning(f"{category} プリセットを適用しました（{count}件）")
+        self.app_state.set_warning(f"{category} プリセットを適用しました（{count}件）")
 
     def _refresh(self) -> None:
-        snap = self.state.snapshot()
+        snap = self.app_state.snapshot()
 
         if snap.is_locking:
             self.status_card.configure(fg_color="#fef2f2", border_color="#fca5a5")
