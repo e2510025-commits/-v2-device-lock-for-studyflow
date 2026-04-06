@@ -22,8 +22,6 @@ def run() -> None:
     service_lock = threading.RLock()
     services_started = False
     timer_watcher: FirebaseTimerWatcher | None = None
-
-    initialize_firebase_admin(config.firebase_service_account_path)
     process_guard = ProcessGuard(config, state, Path(config.whitelist_path))
     remote_api = RemoteUnlockServer(config, state)
     auto_updater = AutoUpdater(config, state)
@@ -31,6 +29,7 @@ def run() -> None:
     def on_google_login() -> tuple[str, str]:
         nonlocal services_started, timer_watcher
         require_runtime_files(config)
+        initialize_firebase_admin(config.firebase_service_account_path)
         login = run_google_login_and_resolve_uid(
             config.google_oauth_client_secret_path,
             config.google_oauth_scopes,
