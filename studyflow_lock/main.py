@@ -3,6 +3,7 @@ from __future__ import annotations
 import ctypes
 from pathlib import Path
 from traceback import format_exc
+import threading
 
 from studyflow_lock.auth import initialize_firebase_admin, run_google_login_and_resolve_uid
 from studyflow_lock.config import AppConfig
@@ -19,26 +20,55 @@ def run() -> None:
     config = AppConfig.load()
     require_runtime_files(config)
     state = AppState()
+    service_lock = threading.RLock()
+    services_started = False
+    timer_watcher: FirebaseTimerWatcher | None = None
 
     initialize_firebase_admin(config.firebase_service_account_path)
-    login = run_google_login_and_resolve_uid(
-        config.google_oauth_client_secret_path,
-        config.google_oauth_scopes,
-    )
-    state.set_identity(login.uid, login.email)
-
-    timer_watcher = FirebaseTimerWatcher(config, state, login.uid)
     process_guard = ProcessGuard(config, state, Path(config.whitelist_path))
     remote_api = RemoteUnlockServer(config, state)
     auto_updater = AutoUpdater(config, state)
 
-    timer_watcher.start()
-    process_guard.start()
-    remote_api.start()
-    auto_updater.start()
+    def on_google_login() -> tuple[str, str]:
+        nonlocal services_started, timer_watcher
+        login = run_google_login_and_resolve_uid(
+            config.google_oauth_client_secret_path,
+            config.google_oauth_scopes,
+        )
+        state.set_identity(login.uid, login.email)
 
-    app = AppWindow(state)
-    app.set_login(login.uid, login.email)
+        with service_lock:
+            if not services_started:
+                timer_watcher = FirebaseTimerWatcher(config, state, login.uid)
+                timer_watcher.start()
+                process_guard.start()
+                remote_api.start()
+                auto_updater.start()
+                services_started = True
+
+        state.set_warning("StudyFlowと連携しました。Webタイマーに自動同期します。")
+        return login.uid, login.email
+
+    def on_fetch_running_apps():
+        return process_guard.list_running_apps()
+
+    def on_allow_app(executable: str) -> None:
+        process_guard.add_allowed(executable)
+
+    def on_block_app(executable: str) -> None:
+        process_guard.add_blocked(executable)
+
+    def on_apply_preset(category: str) -> int:
+        return process_guard.apply_preset(category)
+
+    app = AppWindow(
+        state=state,
+        on_google_login=on_google_login,
+        on_fetch_running_apps=on_fetch_running_apps,
+        on_allow_app=on_allow_app,
+        on_block_app=on_block_app,
+        on_apply_preset=on_apply_preset,
+    )
     app.mainloop()
 
 

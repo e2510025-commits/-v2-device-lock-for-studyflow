@@ -8,6 +8,7 @@
     "notion.exe",
     "explorer.exe"
   ],
+  "blocked_executables": [],
   "safety_exempt_executables": [
     "taskmgr.exe",
     "explorer.exe",
@@ -15,5 +16,22 @@
     "systemsettings.exe",
     "sihost.exe",
     "dwm.exe"
+  ],
+  "presets": {
+    "game": [
+      "steam.exe",
+      "epicgameslauncher.exe",
+      "riotclientservices.exe",
+      "valorant.exe",
+      "leagueclient.exe",
+      "league of legends.exe"
+    ],
+    "sns": [
+      "discord.exe",
+      "telegram.exe",
+      "line.exe",
+      "slack.exe",
+      "whatsapp.exe"
+    ]
   ]
 }
