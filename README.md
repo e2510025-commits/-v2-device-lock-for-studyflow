@@ -107,6 +107,7 @@ pyinstaller --onefile --windowed --name studyflow-lock main.py
 
 - EXEは `--windowed` でビルドされるため、起動時にコマンドプロンプトは表示されません。
 - 起動失敗時はエラーダイアログを表示し、詳細ログを `%LOCALAPPDATA%\StudyFlowDeviceLock\startup-error.log` に出力します。
+- 既にインストール済みの場合、同じ `AppId` を使ってアップデートとして実行されます（`.env` と `whitelist.json` は保持）。
 
 ## GitHub Releaseへ自動掲載
 
