@@ -1,0 +1,12 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+service-account.json
+oauth-client-secret.json
+dist/
+build/
+*.spec
+.venv/
