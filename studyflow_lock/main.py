@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import ctypes
 from pathlib import Path
+from traceback import format_exc
 
 from studyflow_lock.auth import initialize_firebase_admin, run_google_login_and_resolve_uid
 from studyflow_lock.config import AppConfig
@@ -26,7 +28,7 @@ def run() -> None:
     state.set_identity(login.uid, login.email)
 
     timer_watcher = FirebaseTimerWatcher(config, state, login.uid)
-    process_guard = ProcessGuard(config, state, Path("./whitelist.json"))
+    process_guard = ProcessGuard(config, state, Path(config.whitelist_path))
     remote_api = RemoteUnlockServer(config, state)
     auto_updater = AutoUpdater(config, state)
 
@@ -40,5 +42,20 @@ def run() -> None:
     app.mainloop()
 
 
+def run_safe() -> None:
+    try:
+        run()
+    except Exception as exc:  # pylint: disable=broad-except
+        message = (
+            "StudyFlow Device Lock failed to start.\n\n"
+            f"{exc}\n\n"
+            "Please verify .env, service-account.json, oauth-client-secret.json, and whitelist.json."
+        )
+        log_dir = Path.home() / "AppData" / "Local" / "StudyFlowDeviceLock"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        (log_dir / "startup-error.log").write_text(format_exc(), encoding="utf-8")
+        ctypes.windll.user32.MessageBoxW(0, message, "StudyFlow Device Lock", 0x10)
+
+
 if __name__ == "__main__":
-    run()
+    run_safe()

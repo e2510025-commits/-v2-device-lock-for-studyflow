@@ -32,11 +32,11 @@ Source: "..\.env.example"; DestDir: "{app}"; DestName: ".env"; Flags: onlyifdoes
 Source: "..\whitelist.json"; DestDir: "{app}"; Flags: onlyifdoesntexist
 
 [Icons]
-Name: "{autoprograms}\StudyFlow Device Lock"; Filename: "{app}\{#MyAppExeName}"
-Name: "{autodesktop}\StudyFlow Device Lock"; Filename: "{app}\{#MyAppExeName}"
+Name: "{autoprograms}\StudyFlow Device Lock"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
+Name: "{autodesktop}\StudyFlow Device Lock"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "StudyFlow Device Lock を起動"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Description: "StudyFlow Device Lock を起動"; Flags: nowait postinstall skipifsilent
 
 [Registry]
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "StudyFlowDeviceLock"; ValueData: """{app}\{#MyAppExeName}"""; Tasks: startup

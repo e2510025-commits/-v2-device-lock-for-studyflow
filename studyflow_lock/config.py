@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import os
+from pathlib import Path
+import sys
 
 from dotenv import load_dotenv
 
@@ -11,6 +13,7 @@ load_dotenv()
 
 @dataclass(frozen=True)
 class AppConfig:
+    app_root: Path
     firebase_service_account_path: str
     google_oauth_client_secret_path: str
     google_oauth_scopes: list[str]
@@ -27,14 +30,29 @@ class AppConfig:
     app_version: str
     auto_update_enabled: bool
     auto_update_check_interval_hours: int
+    whitelist_path: Path
 
 
     @staticmethod
     def load() -> "AppConfig":
+        if getattr(sys, "frozen", False):
+            app_root = Path(sys.executable).resolve().parent
+        else:
+            app_root = Path(__file__).resolve().parents[1]
+
+        def _resolve_path(raw: str) -> str:
+            candidate = Path(raw)
+            if candidate.is_absolute():
+                return str(candidate)
+            return str((app_root / candidate).resolve())
+
         return AppConfig(
-            firebase_service_account_path=os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH", "./service-account.json"),
-            google_oauth_client_secret_path=os.getenv(
-                "GOOGLE_OAUTH_CLIENT_SECRET_PATH", "./oauth-client-secret.json"
+            app_root=app_root,
+            firebase_service_account_path=_resolve_path(
+                os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH", "./service-account.json")
+            ),
+            google_oauth_client_secret_path=_resolve_path(
+                os.getenv("GOOGLE_OAUTH_CLIENT_SECRET_PATH", "./oauth-client-secret.json")
             ),
             google_oauth_scopes=[
                 scope.strip()
@@ -66,5 +84,8 @@ class AppConfig:
             in {"1", "true", "yes", "on"},
             auto_update_check_interval_hours=int(
                 os.getenv("AUTO_UPDATE_CHECK_INTERVAL_HOURS", "6")
+            ),
+            whitelist_path=Path(
+                _resolve_path(os.getenv("WHITELIST_PATH", "./whitelist.json"))
             ),
         )

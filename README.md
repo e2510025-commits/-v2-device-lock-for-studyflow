@@ -91,6 +91,11 @@ pyinstaller --onefile --name studyflow-lock main.py
 
 生成物: `dist/StudyFlow-Lock-Setup.exe`
 
+補足:
+
+- EXEは `--windowed` でビルドされるため、起動時にコマンドプロンプトは表示されません。
+- 起動失敗時はエラーダイアログを表示し、詳細ログを `%LOCALAPPDATA%\StudyFlowDeviceLock\startup-error.log` に出力します。
+
 ## GitHub Releaseへ自動掲載
 
 - ワークフロー: `.github/workflows/release-installer.yml`

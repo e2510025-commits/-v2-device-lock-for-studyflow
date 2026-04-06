@@ -49,7 +49,7 @@ jobs:
       - name: Build EXE
         shell: pwsh
         run: |
-          pyinstaller --onefile --name studyflow-lock main.py
+          pyinstaller --onefile --windowed --name studyflow-lock main.py
 
       - name: Build Installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
