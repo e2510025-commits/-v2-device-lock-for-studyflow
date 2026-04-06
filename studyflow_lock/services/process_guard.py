@@ -35,6 +35,45 @@ class ProcessGuard:
         self._rules_lock = threading.RLock()
         self._load_whitelist()
 
+    def _default_whitelist_payload(self) -> dict:
+        return {
+            "allowed_executables": [
+                "python.exe",
+                "studyflow-lock.exe",
+                "chrome.exe",
+                "msedge.exe",
+                "code.exe",
+                "notion.exe",
+                "explorer.exe",
+            ],
+            "blocked_executables": [],
+            "safety_exempt_executables": [
+                "taskmgr.exe",
+                "explorer.exe",
+                "applicationframehost.exe",
+                "systemsettings.exe",
+                "sihost.exe",
+                "dwm.exe",
+            ],
+            "presets": {
+                "game": [
+                    "steam.exe",
+                    "epicgameslauncher.exe",
+                    "riotclientservices.exe",
+                    "valorant.exe",
+                    "leagueclient.exe",
+                    "league of legends.exe",
+                ],
+                "sns": [
+                    "discord.exe",
+                    "telegram.exe",
+                    "line.exe",
+                    "slack.exe",
+                    "whatsapp.exe",
+                ],
+            },
+        }
+
     def _is_minimize_enabled(self) -> bool:
         return self.config.lock_enforcement_mode in {"minimize", "both"}
 
@@ -43,7 +82,22 @@ class ProcessGuard:
 
     def _load_whitelist(self) -> None:
         with self._rules_lock:
-            data = json.loads(self.whitelist_path.read_text(encoding="utf-8"))
+            if not self.whitelist_path.exists():
+                self.whitelist_path.parent.mkdir(parents=True, exist_ok=True)
+                self.whitelist_path.write_text(
+                    json.dumps(self._default_whitelist_payload(), indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8",
+                )
+
+            try:
+                data = json.loads(self.whitelist_path.read_text(encoding="utf-8"))
+            except Exception:
+                data = self._default_whitelist_payload()
+                self.whitelist_path.write_text(
+                    json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8",
+                )
+
             self.allowed_executables = {
                 item.strip().lower() for item in data.get("allowed_executables", []) if item.strip()
             }

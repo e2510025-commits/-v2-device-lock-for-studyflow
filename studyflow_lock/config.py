@@ -46,6 +46,12 @@ class AppConfig:
                 return str(candidate)
             return str((app_root / candidate).resolve())
 
+        whitelist_raw = os.getenv("WHITELIST_PATH", "./whitelist.json")
+        whitelist_candidate = Path(_resolve_path(whitelist_raw))
+        default_whitelist = (app_root / "whitelist.json").resolve()
+        if not whitelist_candidate.exists() and default_whitelist.exists():
+            whitelist_candidate = default_whitelist
+
         return AppConfig(
             app_root=app_root,
             firebase_service_account_path=_resolve_path(
@@ -85,7 +91,5 @@ class AppConfig:
             auto_update_check_interval_hours=int(
                 os.getenv("AUTO_UPDATE_CHECK_INTERVAL_HOURS", "6")
             ),
-            whitelist_path=Path(
-                _resolve_path(os.getenv("WHITELIST_PATH", "./whitelist.json"))
-            ),
+            whitelist_path=whitelist_candidate,
         )
