@@ -13,7 +13,7 @@ class AppWindow(ctk.CTk):
     def __init__(
         self,
         state: AppState,
-        on_google_login: Callable[[], tuple[str, str]],
+        on_pairing_login: Callable[[str], tuple[str, str]],
         on_fetch_running_apps: Callable[[], list[RunningApp]],
         on_allow_app: Callable[[str], None],
         on_block_app: Callable[[str], None],
@@ -22,7 +22,7 @@ class AppWindow(ctk.CTk):
     ) -> None:
         super().__init__()
         self.app_state = state
-        self.on_google_login = on_google_login
+        self.on_pairing_login = on_pairing_login
         self.on_fetch_running_apps = on_fetch_running_apps
         self.on_allow_app = on_allow_app
         self.on_block_app = on_block_app
@@ -83,26 +83,39 @@ class AppWindow(ctk.CTk):
 
         self.subtitle_label = ctk.CTkLabel(
             hero,
-            text="Googleでログインするだけで、Webタイマーと自動同期します",
+            text="サイトで発行したペアリングコードを入力して連携します",
             text_color="#374151",
             font=("Segoe UI", 14),
         )
         self.subtitle_label.pack(anchor="w", padx=16, pady=(0, 10))
 
+        pair_row = ctk.CTkFrame(hero, fg_color="transparent")
+        pair_row.pack(anchor="w", padx=16, pady=(0, 16))
+
+        self.pairing_code_entry = ctk.CTkEntry(
+            pair_row,
+            width=250,
+            height=40,
+            border_width=1,
+            border_color="#d4d4d8",
+            placeholder_text="ペアリングコードを入力",
+        )
+        self.pairing_code_entry.pack(side="left", padx=(0, 8))
+
         self.google_login_button = ctk.CTkButton(
             hero,
-            text="Googleでログイン",
-            width=220,
+            text="コードで連携",
+            width=160,
             height=40,
             border_width=1,
             border_color="#d4d4d8",
             command=self._handle_login_click,
         )
-        self.google_login_button.pack(anchor="w", padx=16, pady=(0, 16))
+        self.google_login_button.pack(side="left")
 
         self.login_label = ctk.CTkLabel(
             self.main,
-            text="ログイン状態: 未認証",
+            text="連携状態: 未連携",
             text_color="#111827",
             font=("Segoe UI", 16, "bold"),
         )
@@ -351,11 +364,15 @@ class AppWindow(ctk.CTk):
     def _handle_login_click(self) -> None:
         if self._login_in_progress:
             return
+        code = self.pairing_code_entry.get().strip()
+        if not code:
+            messagebox.showwarning("コード未入力", "サイトで発行したペアリングコードを入力してください。")
+            return
         self._login_in_progress = True
-        self.google_login_button.configure(state="disabled", text="ブラウザでログイン中...")
+        self.google_login_button.configure(state="disabled", text="連携中...")
         self.update_idletasks()
         try:
-            uid, email = self.on_google_login()
+            uid, email = self.on_pairing_login(code)
             self._on_login_success(uid, email)
         except Exception as exc:  # pylint: disable=broad-except
             self._on_login_failed(str(exc))
@@ -363,14 +380,14 @@ class AppWindow(ctk.CTk):
     def _on_login_success(self, uid: str, email: str) -> None:
         self._login_in_progress = False
         self.google_login_button.configure(state="normal", text="連携済み")
-        self.login_label.configure(text=f"ログイン状態: {email} (uid: {uid})")
+        self.login_label.configure(text=f"連携状態: {email} (uid: {uid})")
 
     def _on_login_failed(self, reason: str) -> None:
         self._login_in_progress = False
-        self.google_login_button.configure(state="normal", text="Googleでログイン")
-        self.login_label.configure(text="ログイン状態: 失敗")
-        self.app_state.set_warning(f"ログイン失敗: {reason}")
-        messagebox.showerror("Googleログイン失敗", reason)
+        self.google_login_button.configure(state="normal", text="コードで連携")
+        self.login_label.configure(text="連携状態: 失敗")
+        self.app_state.set_warning(f"連携失敗: {reason}")
+        messagebox.showerror("アカウント連携失敗", reason)
 
     def _emoji_for_app(self, exe: str) -> str:
         value = exe.lower()

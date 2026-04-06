@@ -16,15 +16,9 @@ Get-Content ".env" | ForEach-Object {
 }
 
 $servicePath = $envValues["FIREBASE_SERVICE_ACCOUNT_PATH"]
-$oauthPath = $envValues["GOOGLE_OAUTH_CLIENT_SECRET_PATH"]
 if (-not $servicePath) { $servicePath = "./service-account.json" }
-if (-not $oauthPath) { $oauthPath = "./oauth-client-secret.json" }
 
 if (-not (Test-Path $servicePath)) {
   throw "FIREBASE_SERVICE_ACCOUNT_PATH が見つかりません: $servicePath"
 }
-if (-not (Test-Path $oauthPath)) {
-  throw "GOOGLE_OAUTH_CLIENT_SECRET_PATH が見つかりません: $oauthPath"
-}
-
-Write-Host "Preflight OK: credential files are present."
+Write-Host "Preflight OK: service account file is present."

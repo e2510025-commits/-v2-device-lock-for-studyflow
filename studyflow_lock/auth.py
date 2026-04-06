@@ -2,11 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import socket
 
 import firebase_admin
 from firebase_admin import auth, credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 import requests
+
+from studyflow_lock.config import AppConfig
 
 
 @dataclass(frozen=True)
@@ -40,3 +43,35 @@ def run_google_login_and_resolve_uid(client_secret_path: str, scopes: list[str])
 
     firebase_user = auth.get_user_by_email(email)
     return LoginResult(uid=firebase_user.uid, email=email)
+
+
+def run_pairing_code_login(config: AppConfig, code: str) -> LoginResult:
+    pairing_code = code.strip()
+    if len(pairing_code) < config.pairing_code_min_length:
+        raise ValueError(f"ペアリングコードは{config.pairing_code_min_length}文字以上で入力してください。")
+
+    endpoint = f"{config.pairing_api_base_url.rstrip('/')}/{config.pairing_api_path.lstrip('/')}"
+    payload = {
+        "code": pairing_code,
+        "deviceName": socket.gethostname(),
+        "platform": "windows",
+    }
+    response = requests.post(endpoint, json=payload, timeout=20)
+    if response.status_code >= 400:
+        raise RuntimeError(f"ペアリング失敗: HTTP {response.status_code}")
+
+    body = json.loads(response.text)
+    uid = (
+        body.get("uid")
+        or (body.get("data") or {}).get("uid")
+        or (body.get("result") or {}).get("uid")
+    )
+    email = (
+        body.get("email")
+        or (body.get("data") or {}).get("email")
+        or (body.get("result") or {}).get("email")
+        or "unknown@studyflow"
+    )
+    if not uid:
+        raise RuntimeError("ペアリング応答に uid がありません。サーバー仕様を確認してください。")
+    return LoginResult(uid=uid, email=email)

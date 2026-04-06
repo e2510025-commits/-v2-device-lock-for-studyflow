@@ -31,6 +31,9 @@ class AppConfig:
     auto_update_enabled: bool
     auto_update_check_interval_hours: int
     whitelist_path: Path
+    pairing_api_base_url: str
+    pairing_api_path: str
+    pairing_code_min_length: int
 
 
     @staticmethod
@@ -92,4 +95,7 @@ class AppConfig:
                 os.getenv("AUTO_UPDATE_CHECK_INTERVAL_HOURS", "6")
             ),
             whitelist_path=whitelist_candidate,
+            pairing_api_base_url=os.getenv("PAIRING_API_BASE_URL", "https://studyflow.studio"),
+            pairing_api_path=os.getenv("PAIRING_API_PATH", "/api/device/pair"),
+            pairing_code_min_length=int(os.getenv("PAIRING_CODE_MIN_LENGTH", "6")),
         )

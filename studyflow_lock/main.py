@@ -5,7 +5,7 @@ from pathlib import Path
 from traceback import format_exc
 import threading
 
-from studyflow_lock.auth import initialize_firebase_admin, run_google_login_and_resolve_uid
+from studyflow_lock.auth import initialize_firebase_admin, run_pairing_code_login
 from studyflow_lock.config import AppConfig
 from studyflow_lock.preflight import require_runtime_files
 from studyflow_lock.services.auto_updater import AutoUpdater
@@ -26,14 +26,11 @@ def run() -> None:
     remote_api = RemoteUnlockServer(config, state)
     auto_updater = AutoUpdater(config, state)
 
-    def on_google_login() -> tuple[str, str]:
+    def on_pairing_login(code: str) -> tuple[str, str]:
         nonlocal services_started, timer_watcher
         require_runtime_files(config)
         initialize_firebase_admin(config.firebase_service_account_path)
-        login = run_google_login_and_resolve_uid(
-            config.google_oauth_client_secret_path,
-            config.google_oauth_scopes,
-        )
+        login = run_pairing_code_login(config, code)
         state.set_identity(login.uid, login.email)
 
         with service_lock:
@@ -65,7 +62,7 @@ def run() -> None:
 
     app = AppWindow(
         state=state,
-        on_google_login=on_google_login,
+        on_pairing_login=on_pairing_login,
         on_fetch_running_apps=on_fetch_running_apps,
         on_allow_app=on_allow_app,
         on_block_app=on_block_app,
