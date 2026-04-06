@@ -19,6 +19,8 @@ class Snapshot:
     active_executable: str
     active_window_title: str
     warning_message: str
+    overlay_active: bool
+    overlay_message: str
     remote_unlock_until_iso: str | None
 
 
@@ -33,6 +35,8 @@ class AppState:
         self.active_executable: str = ""
         self.active_window_title: str = ""
         self.warning_message: str = ""
+        self.overlay_active: bool = False
+        self.overlay_message: str = ""
         self.remote_unlock_until: datetime | None = None
 
     def set_identity(self, uid: str, email: str) -> None:
@@ -57,6 +61,11 @@ class AppState:
     def set_warning(self, message: str) -> None:
         with self._lock:
             self.warning_message = message
+
+    def set_overlay(self, active: bool, message: str = "") -> None:
+        with self._lock:
+            self.overlay_active = active
+            self.overlay_message = message
 
     def arm_remote_unlock(self, duration_seconds: int) -> None:
         with self._lock:
@@ -90,6 +99,8 @@ class AppState:
                 active_executable=self.active_executable,
                 active_window_title=self.active_window_title,
                 warning_message=self.warning_message,
+                overlay_active=self.overlay_active,
+                overlay_message=self.overlay_message,
                 remote_unlock_until_iso=self.remote_unlock_until.isoformat()
                 if self.remote_unlock_until
                 else None,

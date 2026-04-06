@@ -33,7 +33,13 @@ Copy-Item .env.example .env
 - `service-account.json` (Firebase Admin SDK)
 - `oauth-client-secret.json` (Google OAuth Desktop)
 
-5. 実行
+5. 事前チェック
+
+```powershell
+./scripts/preflight_check.ps1
+```
+
+6. 実行
 
 ```powershell
 python main.py
@@ -52,12 +58,21 @@ python main.py
 - `FIRESTORE_TIMER_DOC_PATH_TEMPLATE`
 - `FIRESTORE_TIMER_FIELD_PATH`
 - `FIRESTORE_TIMER_REMAINING_PATH`
+- `LOCK_ENFORCEMENT_MODE` (`minimize` / `overlay` / `both`)
 
 ## リモート解除API
 
 - エンドポイント: `POST /remote-unlock`
 - JSON: `{ "uid": "<firebase uid>", "secret": "<REMOTE_UNLOCK_SECRET>" }`
 - 成功時: 一定時間ロック解除
+
+## 実機確認手順（1）
+
+1. StudyFlow Webでタイマーを開始する
+2. アプリのステータスが `LOCKING` に変わることを確認
+3. ホワイトリスト外アプリを前面に出す
+4. `.env` の `LOCK_ENFORCEMENT_MODE=overlay` または `both` のとき、全画面警告オーバーレイが表示されることを確認
+5. 同時に `minimize` が有効なら対象アプリが最小化されることを確認
 
 ## One-Click EXE化
 

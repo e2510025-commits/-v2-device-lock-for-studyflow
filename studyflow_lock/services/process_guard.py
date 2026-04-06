@@ -25,6 +25,12 @@ class ProcessGuard:
         self.safety_exempt_executables: set[str] = set()
         self._load_whitelist()
 
+    def _is_minimize_enabled(self) -> bool:
+        return self.config.lock_enforcement_mode in {"minimize", "both"}
+
+    def _is_overlay_enabled(self) -> bool:
+        return self.config.lock_enforcement_mode in {"overlay", "both"}
+
     def _load_whitelist(self) -> None:
         data = json.loads(self.whitelist_path.read_text(encoding="utf-8"))
         self.allowed_executables = {
@@ -71,25 +77,37 @@ class ProcessGuard:
                 self.state.set_active_window(exe, title)
 
                 if not self.state.is_locking():
+                    self.state.set_overlay(False, "")
                     time.sleep(self.config.process_watch_interval_seconds)
                     continue
 
                 if not exe:
+                    self.state.set_overlay(False, "")
                     time.sleep(self.config.process_watch_interval_seconds)
                     continue
 
                 if exe in self.safety_exempt_executables:
+                    self.state.set_overlay(False, "")
                     time.sleep(self.config.process_watch_interval_seconds)
                     continue
 
                 if exe not in self.allowed_executables:
-                    self._minimize(hwnd)
-                    self.state.set_warning(
-                        f"Blocked app minimized: {exe} ({title[:40]})"
+                    overlay_message = (
+                        "STUDY LOCK ACTIVE\n\n"
+                        "許可されていないアプリが検出されました。\n"
+                        f"対象: {exe}\n"
+                        "StudyFlowのタイマーを停止するか、許可アプリへ戻ってください。"
                     )
+                    if self._is_minimize_enabled():
+                        self._minimize(hwnd)
+                    if self._is_overlay_enabled():
+                        self.state.set_overlay(True, overlay_message)
+                    self.state.set_warning(f"Blocked app detected: {exe} ({title[:40]})")
                 else:
+                    self.state.set_overlay(False, "")
                     self.state.set_warning("LOCK ON: allowed app in focus")
             except Exception as exc:  # pylint: disable=broad-except
+                self.state.set_overlay(False, "")
                 self.state.set_warning(f"Process guard error: {exc}")
 
             time.sleep(self.config.process_watch_interval_seconds)

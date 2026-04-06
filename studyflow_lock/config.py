@@ -22,6 +22,7 @@ class AppConfig:
     remote_unlock_secret: str
     remote_unlock_duration_seconds: int
     process_watch_interval_seconds: float
+    lock_enforcement_mode: str
 
 
     @staticmethod
@@ -54,4 +55,5 @@ class AppConfig:
             process_watch_interval_seconds=float(
                 os.getenv("PROCESS_WATCH_INTERVAL_SECONDS", "0.5")
             ),
+            lock_enforcement_mode=os.getenv("LOCK_ENFORCEMENT_MODE", "both").lower(),
         )

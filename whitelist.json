@@ -1,5 +1,7 @@
 {
   "allowed_executables": [
+    "python.exe",
+    "studyflow-lock.exe",
     "chrome.exe",
     "msedge.exe",
     "code.exe",

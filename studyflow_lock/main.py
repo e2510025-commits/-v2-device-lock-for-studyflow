@@ -4,6 +4,7 @@ from pathlib import Path
 
 from studyflow_lock.auth import initialize_firebase_admin, run_google_login_and_resolve_uid
 from studyflow_lock.config import AppConfig
+from studyflow_lock.preflight import require_runtime_files
 from studyflow_lock.services.firebase_watcher import FirebaseTimerWatcher
 from studyflow_lock.services.process_guard import ProcessGuard
 from studyflow_lock.services.remote_unlock_api import RemoteUnlockServer
@@ -13,6 +14,7 @@ from studyflow_lock.ui.app_window import AppWindow
 
 def run() -> None:
     config = AppConfig.load()
+    require_runtime_files(config)
     state = AppState()
 
     initialize_firebase_admin(config.firebase_service_account_path)

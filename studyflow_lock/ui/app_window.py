@@ -82,6 +82,10 @@ class AppWindow(ctk.CTk):
         )
         self.warning_label.pack(anchor="w", padx=16, pady=(6, 16))
 
+        self.overlay: ctk.CTkToplevel | None = None
+        self.overlay_label: ctk.CTkLabel | None = None
+        self._build_overlay()
+
         buttons = ctk.CTkFrame(main, fg_color="transparent")
         buttons.pack(anchor="w", padx=16, pady=8)
 
@@ -127,6 +131,48 @@ class AppWindow(ctk.CTk):
     def _force_stop(self) -> None:
         self.state.set_local_override(False)
 
+    def _build_overlay(self) -> None:
+        overlay = ctk.CTkToplevel(self)
+        overlay.withdraw()
+        overlay.overrideredirect(True)
+        overlay.attributes("-topmost", True)
+        overlay.configure(fg_color="#fef2f2")
+
+        frame = ctk.CTkFrame(
+            overlay,
+            fg_color="#fff1f2",
+            border_width=3,
+            border_color="#ef4444",
+            corner_radius=0,
+        )
+        frame.pack(fill="both", expand=True)
+
+        label = ctk.CTkLabel(
+            frame,
+            text="",
+            text_color="#7f1d1d",
+            justify="center",
+            font=("Segoe UI", 30, "bold"),
+        )
+        label.place(relx=0.5, rely=0.5, anchor="center")
+
+        self.overlay = overlay
+        self.overlay_label = label
+
+    def _show_overlay(self, message: str) -> None:
+        if not self.overlay or not self.overlay_label:
+            return
+        width = self.winfo_screenwidth()
+        height = self.winfo_screenheight()
+        self.overlay.geometry(f"{width}x{height}+0+0")
+        self.overlay_label.configure(text=message)
+        self.overlay.deiconify()
+        self.overlay.lift()
+
+    def _hide_overlay(self) -> None:
+        if self.overlay:
+            self.overlay.withdraw()
+
     def _refresh(self) -> None:
         snap = self.state.snapshot()
 
@@ -148,5 +194,10 @@ class AppWindow(ctk.CTk):
             app_text = f"{app_text} | {snap.active_window_title[:48]}"
         self.active_app_label.configure(text=f"アクティブアプリ: {app_text}")
         self.warning_label.configure(text=snap.warning_message)
+
+        if snap.overlay_active and snap.is_locking:
+            self._show_overlay(snap.overlay_message or "STUDY LOCK ACTIVE")
+        else:
+            self._hide_overlay()
 
         self.after(300, self._refresh)
