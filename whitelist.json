@@ -1,0 +1,17 @@
+{
+  "allowed_executables": [
+    "chrome.exe",
+    "msedge.exe",
+    "code.exe",
+    "notion.exe",
+    "explorer.exe"
+  ],
+  "safety_exempt_executables": [
+    "taskmgr.exe",
+    "explorer.exe",
+    "applicationframehost.exe",
+    "systemsettings.exe",
+    "sihost.exe",
+    "dwm.exe"
+  ]
+}
