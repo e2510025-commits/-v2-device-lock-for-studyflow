@@ -5,6 +5,7 @@ from pathlib import Path
 from studyflow_lock.auth import initialize_firebase_admin, run_google_login_and_resolve_uid
 from studyflow_lock.config import AppConfig
 from studyflow_lock.preflight import require_runtime_files
+from studyflow_lock.services.auto_updater import AutoUpdater
 from studyflow_lock.services.firebase_watcher import FirebaseTimerWatcher
 from studyflow_lock.services.process_guard import ProcessGuard
 from studyflow_lock.services.remote_unlock_api import RemoteUnlockServer
@@ -27,10 +28,12 @@ def run() -> None:
     timer_watcher = FirebaseTimerWatcher(config, state, login.uid)
     process_guard = ProcessGuard(config, state, Path("./whitelist.json"))
     remote_api = RemoteUnlockServer(config, state)
+    auto_updater = AutoUpdater(config, state)
 
     timer_watcher.start()
     process_guard.start()
     remote_api.start()
+    auto_updater.start()
 
     app = AppWindow(state)
     app.set_login(login.uid, login.email)

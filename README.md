@@ -83,6 +83,38 @@ pyinstaller --onefile --name studyflow-lock main.py
 
 生成物: `dist/studyflow-lock.exe`
 
+## インストーラー作成（ローカル）
+
+```powershell
+./scripts/build_release_installer.ps1 -Version 0.2.0
+```
+
+生成物: `dist/StudyFlow-Lock-Setup.exe`
+
+## GitHub Releaseへ自動掲載
+
+- ワークフロー: `.github/workflows/release-installer.yml`
+- `v0.2.0` のようなタグをpushすると、以下を自動でReleaseへ添付します。
+	- `studyflow-lock.exe`
+	- `StudyFlow-Lock-Setup.exe`
+
+例:
+
+```powershell
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+## 自動アップデート
+
+- 起動中に GitHub Releases の最新バージョンを確認します。
+- 最新版があればインストーラーを自動ダウンロードしてサイレント実行します。
+- 既定設定は `.env` の以下で調整できます。
+	- `APP_VERSION`
+	- `GITHUB_REPO`
+	- `AUTO_UPDATE_ENABLED`
+	- `AUTO_UPDATE_CHECK_INTERVAL_HOURS`
+
 ## スタートアップ常駐（簡易）
 
 Windowsスタートアップフォルダに `studyflow-lock.exe` のショートカットを置くと、PC起動時に自動起動できます。
