@@ -46,7 +46,7 @@ def run_google_login_and_resolve_uid(client_secret_path: str, scopes: list[str])
 
 
 def run_pairing_code_login(config: AppConfig, code: str) -> LoginResult:
-    pairing_code = code.strip()
+    pairing_code = "".join(ch for ch in code.upper() if ch.isalnum())
     if len(pairing_code) < config.pairing_code_min_length:
         raise ValueError(f"ペアリングコードは{config.pairing_code_min_length}文字以上で入力してください。")
 
@@ -56,11 +56,26 @@ def run_pairing_code_login(config: AppConfig, code: str) -> LoginResult:
         "deviceName": socket.gethostname(),
         "platform": "windows",
     }
-    response = requests.post(endpoint, json=payload, timeout=20)
+    response = requests.post(endpoint, json=payload, timeout=20, allow_redirects=False)
+    if response.status_code in {301, 302, 307, 308}:
+        raise RuntimeError(
+            "ペアリングAPIがログインへリダイレクトされました。"
+            "サイト側の /api/device/pair を未認証アクセス許可にしてください。"
+        )
     if response.status_code >= 400:
-        raise RuntimeError(f"ペアリング失敗: HTTP {response.status_code}")
+        reason = ""
+        try:
+            err = response.json()
+            reason = str(err.get("error") or "")
+        except ValueError:
+            reason = response.text[:180].strip()
+        detail = f" ({reason})" if reason else ""
+        raise RuntimeError(f"ペアリング失敗: HTTP {response.status_code}{detail}")
 
-    body = json.loads(response.text)
+    try:
+        body = response.json()
+    except ValueError as exc:
+        raise RuntimeError("ペアリング応答がJSONではありません。API URL設定を確認してください。") from exc
     uid = (
         body.get("uid")
         or (body.get("data") or {}).get("uid")
