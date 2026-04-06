@@ -18,7 +18,6 @@ from studyflow_lock.ui.app_window import AppWindow
 
 def run() -> None:
     config = AppConfig.load()
-    require_runtime_files(config)
     state = AppState()
     service_lock = threading.RLock()
     services_started = False
@@ -31,6 +30,7 @@ def run() -> None:
 
     def on_google_login() -> tuple[str, str]:
         nonlocal services_started, timer_watcher
+        require_runtime_files(config)
         login = run_google_login_and_resolve_uid(
             config.google_oauth_client_secret_path,
             config.google_oauth_scopes,
@@ -79,7 +79,8 @@ def run_safe() -> None:
         message = (
             "StudyFlow Device Lock failed to start.\n\n"
             f"{exc}\n\n"
-            "Please verify .env, service-account.json, oauth-client-secret.json, and whitelist.json."
+            "The app will still open without credentials; add service-account.json and "
+            "oauth-client-secret.json in the install folder before pressing Google login."
         )
         log_dir = Path.home() / "AppData" / "Local" / "StudyFlowDeviceLock"
         log_dir.mkdir(parents=True, exist_ok=True)
