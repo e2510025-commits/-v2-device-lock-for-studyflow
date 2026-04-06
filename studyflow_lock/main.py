@@ -79,8 +79,7 @@ def run_safe() -> None:
         message = (
             "StudyFlow Device Lock failed to start.\n\n"
             f"{exc}\n\n"
-            "The app will still open without credentials; add service-account.json and "
-            "oauth-client-secret.json in the install folder before pressing Google login."
+            "Place service-account.json in the install folder and retry account linking with a pairing code."
         )
         log_dir = Path.home() / "AppData" / "Local" / "StudyFlowDeviceLock"
         log_dir.mkdir(parents=True, exist_ok=True)

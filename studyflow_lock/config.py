@@ -49,6 +49,14 @@ class AppConfig:
                 return str(candidate)
             return str((app_root / candidate).resolve())
 
+        def _resolve_credential_path(raw: str, default_relative: str) -> str:
+            resolved = Path(_resolve_path(raw))
+            default_path = (app_root / default_relative).resolve()
+            # If env points to stale absolute path, prefer bundled default when present.
+            if not resolved.exists() and default_path.exists():
+                return str(default_path)
+            return str(resolved)
+
         whitelist_raw = os.getenv("WHITELIST_PATH", "./whitelist.json")
         whitelist_candidate = Path(_resolve_path(whitelist_raw))
         default_whitelist = (app_root / "whitelist.json").resolve()
@@ -57,11 +65,13 @@ class AppConfig:
 
         return AppConfig(
             app_root=app_root,
-            firebase_service_account_path=_resolve_path(
-                os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH", "./service-account.json")
+            firebase_service_account_path=_resolve_credential_path(
+                os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH", "./service-account.json"),
+                "service-account.json",
             ),
-            google_oauth_client_secret_path=_resolve_path(
-                os.getenv("GOOGLE_OAUTH_CLIENT_SECRET_PATH", "./oauth-client-secret.json")
+            google_oauth_client_secret_path=_resolve_credential_path(
+                os.getenv("GOOGLE_OAUTH_CLIENT_SECRET_PATH", "./oauth-client-secret.json"),
+                "oauth-client-secret.json",
             ),
             google_oauth_scopes=[
                 scope.strip()
