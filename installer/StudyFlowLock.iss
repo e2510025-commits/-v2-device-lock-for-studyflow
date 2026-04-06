@@ -1,5 +1,8 @@
 #define MyAppName "StudyFlow Device Lock"
-#define MyAppVersion "{#GetEnv('APP_VERSION')}"
+#ifndef APP_VERSION
+	#define APP_VERSION "0.2.1"
+#endif
+#define MyAppVersion APP_VERSION
 #define MyAppPublisher "StudyFlow"
 #define MyAppExeName "studyflow-lock.exe"
 

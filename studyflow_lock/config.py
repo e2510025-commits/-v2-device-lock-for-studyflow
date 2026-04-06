@@ -61,7 +61,7 @@ class AppConfig:
             ),
             lock_enforcement_mode=os.getenv("LOCK_ENFORCEMENT_MODE", "both").lower(),
             github_repo=os.getenv("GITHUB_REPO", "e2510025-commits/-v2-device-lock-for-studyflow"),
-            app_version=os.getenv("APP_VERSION", "0.1.0"),
+            app_version=os.getenv("APP_VERSION", "0.2.1"),
             auto_update_enabled=os.getenv("AUTO_UPDATE_ENABLED", "true").lower()
             in {"1", "true", "yes", "on"},
             auto_update_check_interval_hours=int(
