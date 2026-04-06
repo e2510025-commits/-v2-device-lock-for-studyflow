@@ -60,6 +60,9 @@ def run() -> None:
     def on_apply_preset(category: str) -> int:
         return process_guard.apply_preset(category)
 
+    def on_get_rules_snapshot() -> tuple[list[str], list[str]]:
+        return process_guard.get_rules_snapshot()
+
     app = AppWindow(
         state=state,
         on_google_login=on_google_login,
@@ -67,6 +70,7 @@ def run() -> None:
         on_allow_app=on_allow_app,
         on_block_app=on_block_app,
         on_apply_preset=on_apply_preset,
+        on_get_rules_snapshot=on_get_rules_snapshot,
     )
     app.mainloop()
 

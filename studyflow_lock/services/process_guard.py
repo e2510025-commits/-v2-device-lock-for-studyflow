@@ -122,6 +122,10 @@ class ProcessGuard:
         self._save_whitelist()
         return len(values)
 
+    def get_rules_snapshot(self) -> tuple[list[str], list[str]]:
+        with self._rules_lock:
+            return (sorted(self.allowed_executables), sorted(self.blocked_executables))
+
     def start(self) -> None:
         if self._thread and self._thread.is_alive():
             return

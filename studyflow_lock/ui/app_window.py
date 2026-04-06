@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import threading
 from typing import Callable
+from tkinter import messagebox
 
 import customtkinter as ctk
 
@@ -18,6 +18,7 @@ class AppWindow(ctk.CTk):
         on_allow_app: Callable[[str], None],
         on_block_app: Callable[[str], None],
         on_apply_preset: Callable[[str], int],
+        on_get_rules_snapshot: Callable[[], tuple[list[str], list[str]]],
     ) -> None:
         super().__init__()
         self.app_state = state
@@ -26,6 +27,7 @@ class AppWindow(ctk.CTk):
         self.on_allow_app = on_allow_app
         self.on_block_app = on_block_app
         self.on_apply_preset = on_apply_preset
+        self.on_get_rules_snapshot = on_get_rules_snapshot
         self._login_in_progress = False
 
         ctk.set_appearance_mode("light")
@@ -259,7 +261,50 @@ class AppWindow(ctk.CTk):
         )
         self.app_picker_frame.pack(fill="both", expand=True, padx=12, pady=(0, 12))
 
+        rules_box = ctk.CTkFrame(
+            self.detail,
+            fg_color="#ffffff",
+            border_width=1,
+            border_color="#d4d4d8",
+            corner_radius=10,
+        )
+        rules_box.pack(fill="x", padx=16, pady=(0, 12))
+
+        rules_title = ctk.CTkLabel(
+            rules_box,
+            text="現在の追加済みルール",
+            text_color="#111827",
+            font=("Segoe UI", 15, "bold"),
+        )
+        rules_title.pack(anchor="w", padx=12, pady=(10, 8))
+
+        rules_grid = ctk.CTkFrame(rules_box, fg_color="transparent")
+        rules_grid.pack(fill="x", padx=12, pady=(0, 12))
+
+        self.allowed_box = ctk.CTkTextbox(
+            rules_grid,
+            width=430,
+            height=110,
+            border_width=1,
+            border_color="#93c5fd",
+            fg_color="#f8fbff",
+            text_color="#0c4a6e",
+        )
+        self.allowed_box.pack(side="left", padx=(0, 8))
+
+        self.blocked_box = ctk.CTkTextbox(
+            rules_grid,
+            width=430,
+            height=110,
+            border_width=1,
+            border_color="#fca5a5",
+            fg_color="#fff8f8",
+            text_color="#7f1d1d",
+        )
+        self.blocked_box.pack(side="left")
+
         self._refresh_app_picker()
+        self._refresh_rules_snapshot()
 
     def _build_overlay(self) -> None:
         overlay = ctk.CTkToplevel(self)
@@ -308,15 +353,12 @@ class AppWindow(ctk.CTk):
             return
         self._login_in_progress = True
         self.google_login_button.configure(state="disabled", text="ブラウザでログイン中...")
-
-        def _worker() -> None:
-            try:
-                uid, email = self.on_google_login()
-                self.after(0, lambda: self._on_login_success(uid, email))
-            except Exception as exc:  # pylint: disable=broad-except
-                self.after(0, lambda: self._on_login_failed(str(exc)))
-
-        threading.Thread(target=_worker, name="login-worker", daemon=True).start()
+        self.update_idletasks()
+        try:
+            uid, email = self.on_google_login()
+            self._on_login_success(uid, email)
+        except Exception as exc:  # pylint: disable=broad-except
+            self._on_login_failed(str(exc))
 
     def _on_login_success(self, uid: str, email: str) -> None:
         self._login_in_progress = False
@@ -328,16 +370,27 @@ class AppWindow(ctk.CTk):
         self.google_login_button.configure(state="normal", text="Googleでログイン")
         self.login_label.configure(text="ログイン状態: 失敗")
         self.app_state.set_warning(f"ログイン失敗: {reason}")
+        messagebox.showerror("Googleログイン失敗", reason)
 
     def _emoji_for_app(self, exe: str) -> str:
         value = exe.lower()
         if any(k in value for k in ["steam", "riot", "epic", "valorant", "league"]):
-            return "[GAME]"
+            return "🎮"
         if any(k in value for k in ["discord", "telegram", "line", "slack", "whatsapp"]):
-            return "[SNS]"
+            return "💬"
         if any(k in value for k in ["code", "notion"]):
-            return "[STUDY]"
-        return "[APP]"
+            return "📘"
+        return "🧩"
+
+    def _refresh_rules_snapshot(self) -> None:
+        allowed, blocked = self.on_get_rules_snapshot()
+        self.allowed_box.delete("1.0", "end")
+        self.blocked_box.delete("1.0", "end")
+
+        allowed_text = "許可済み\n" + ("\n".join(allowed[:20]) if allowed else "(なし)")
+        blocked_text = "ブロック済み\n" + ("\n".join(blocked[:20]) if blocked else "(なし)")
+        self.allowed_box.insert("1.0", allowed_text)
+        self.blocked_box.insert("1.0", blocked_text)
 
     def _refresh_app_picker(self) -> None:
         for child in self.app_picker_frame.winfo_children():
@@ -402,14 +455,17 @@ class AppWindow(ctk.CTk):
     def _allow_app(self, executable: str) -> None:
         self.on_allow_app(executable)
         self.app_state.set_warning(f"許可に追加: {executable}")
+        self._refresh_rules_snapshot()
 
     def _block_app(self, executable: str) -> None:
         self.on_block_app(executable)
         self.app_state.set_warning(f"ブロックに追加: {executable}")
+        self._refresh_rules_snapshot()
 
     def _apply_preset(self, category: str) -> None:
         count = self.on_apply_preset(category)
         self.app_state.set_warning(f"{category} プリセットを適用しました（{count}件）")
+        self._refresh_rules_snapshot()
 
     def _refresh(self) -> None:
         snap = self.app_state.snapshot()
